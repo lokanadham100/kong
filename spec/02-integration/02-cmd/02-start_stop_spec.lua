@@ -75,7 +75,7 @@ describe("kong start/stop", function()
       local _, _, stdout = assert(helpers.kong_exec("start --vv --conf " .. helpers.test_conf_path))
       assert.matches("admin_listen.*anonymous_reports.*cassandra_ssl.*prefix.*", stdout)
     end)
-    it("does not print sensitive settings in config", function()
+    it("#b does not print sensitive settings in config", function()
       local _, _, stdout = assert(helpers.kong_exec("start --vv --conf " .. helpers.test_conf_path, {
         pg_password = "do not print",
         cassandra_password = "do not print",
@@ -154,7 +154,7 @@ describe("kong start/stop", function()
   end)
 
   describe("nginx_daemon = off", function()
-    it("redirects nginx's stdout to 'kong start' stdout", function()
+    it(" #o redirects nginx's stdout to 'kong start' stdout", function()
       local pl_utils = require "pl.utils"
       local pl_file = require "pl.file"
 
@@ -166,7 +166,7 @@ describe("kong start/stop", function()
 
       local cmd = string.format("KONG_PROXY_ACCESS_LOG=/dev/stdout "    ..
                                 "KONG_NGINX_DAEMON=off %s start -c %s " ..
-                                ">%s 2>/dev/null &", helpers.bin_path,
+                                ">%s 2&>1 &", helpers.bin_path,
                                 helpers.test_conf_path, stdout_path)
 
       local ok, _, _, stderr = pl_utils.executeex(cmd)
