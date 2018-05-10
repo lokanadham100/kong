@@ -82,6 +82,15 @@ local function load_plugin_configuration(api_id, consumer_id, plugin_name)
 end
 
 
+local function check_query_error(res)
+  if type(res) == "string" then
+    ngx.ctx.delay_response = false
+    return responses.send_HTTP_INTERNAL_SERVER_ERROR(res)
+  end
+  return res
+end
+
+
 local function load_one_plugin(self, plugin)
   local api = self.api
   local ctx = self.ctx
@@ -105,22 +114,19 @@ local function load_one_plugin(self, plugin)
   if api then
     table_insert(operations, { load_plugin_configuration, api.id, nil, plugin.name })
   end
-  table_insert(operations, { load_plugin_configuration, nil, nil, plugin.name })
 
   local results = parallelize(operations)
 
   for i = 1, #operations do
-    local r = get_result(results, i)
-
+    local r = check_query_error(get_result(results, i))
     if r then
-      if type(r) == "string" then -- forwarded error from coroutine
-        ngx.ctx.delay_response = false
-        return responses.send_HTTP_INTERNAL_SERVER_ERROR(r)
-      end
-
       return r
     end
   end
+
+  -- perform the most expensive query last, only if needed
+  return check_query_error(load_plugin_configuration(nil, nil, plugin.name))
+
 end
 
 
